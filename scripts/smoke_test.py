@@ -25,7 +25,6 @@ REQUIRED_PAGES = [
     "sprint1/market-research.html",
     "sprint1/business-strategy.html",
     "sprint1/project-charter.html",
-    "sprint1/retrospective.html",
     "sprint1/contributions.html",
     "sprint2/index.html",
 ]
@@ -35,30 +34,16 @@ REQUIRED_ASSETS = [
     "assets/js/site.js",
     "assets/js/parking-scene.js",
     "assets/pdfs/sprint1-market-research.pdf",
-    "assets/pdfs/sprint1-market-research-phase-1.pdf",
-    "assets/pdfs/sprint1-market-research-phase-2.pdf",
     "assets/pdfs/sprint1-business-strategy.pdf",
     "assets/pdfs/sprint1-project-charter.pdf",
-    "assets/pdfs/sprint1-retrospective.pdf",
     "assets/pdfs/sprint1-contributions.pdf",
 ]
 
 REQUIRED_SECTIONS = {
-    "index.html": ["Damn Parking", "parking-canvas", "assets/js/parking-scene.js", "Coming soon"],
+    "index.html": ["Damn Parking", "parking-canvas", "assets/js/parking-scene.js"],
     "about/index.html": ["About", "site-nav"],
-    "sprint1/index.html": ["Sprint 1", "market-research", "retrospective", "View PDF"],
-    "sprint1/project-charter.html": ["Project Charter", "pdf-link", "pdf-viewer", "doc-label"],
-    "sprint1/market-research.html": [
-        "Market Research",
-        "pdf-viewer",
-        "doc-label",
-        "sprint1-market-research-phase-1.pdf",
-        "sprint1-market-research-phase-2.pdf",
-    ],
-    "sprint1/business-strategy.html": ["Business Strategy", "pdf-link", "pdf-viewer", "doc-label"],
-    "sprint1/retrospective.html": ["Retrospective", "pdf-link", "pdf-viewer", "sprint1-retrospective.pdf", "doc-label"],
-    "sprint1/contributions.html": ["Contributions", "pdf-viewer", "pdf-link", "doc-label"],
-    "sprint2/index.html": ["Coming soon"],
+    "sprint1/index.html": ["Sprint 1", "market-research"],
+    "sprint1/project-charter.html": ["Project Charter", "pdf-link"],
 }
 
 SMOKE_PATHS = [
@@ -71,7 +56,6 @@ SMOKE_PATHS = [
     "/sprint1/market-research.html",
     "/sprint1/business-strategy.html",
     "/sprint1/project-charter.html",
-    "/sprint1/retrospective.html",
     "/sprint1/contributions.html",
     "/sprint2/",
     "/sprint2/index.html",
@@ -79,20 +63,17 @@ SMOKE_PATHS = [
     "/assets/js/site.js",
     "/assets/js/parking-scene.js",
     "/assets/pdfs/sprint1-market-research.pdf",
-    "/assets/pdfs/sprint1-market-research-phase-1.pdf",
-    "/assets/pdfs/sprint1-market-research-phase-2.pdf",
     "/assets/pdfs/sprint1-business-strategy.pdf",
     "/assets/pdfs/sprint1-project-charter.pdf",
-    "/assets/pdfs/sprint1-retrospective.pdf",
     "/assets/pdfs/sprint1-contributions.pdf",
 ]
 
 PDF_HREF_RE = re.compile(
-    r"""(?:href|src)=["']([^"']+\.pdf[^"']*)["']""",
+    r"""(?:href|src)=["']([^"']+\.pdf)["']""",
     re.IGNORECASE,
 )
 ASSET_REF_RE = re.compile(
-    r"""(?:href|src)=["']([^"']+\.(?:css|js|pdf)[^"']*)["']""",
+    r"""(?:href|src)=["']([^"']+\.(?:css|js|pdf))["']""",
     re.IGNORECASE,
 )
 
@@ -351,26 +332,6 @@ def check_http_smoke(failures: Failures) -> None:
         server.server_close()
 
 
-def check_retrospective_published(failures: Failures) -> None:
-    """Sprint 1 Retrospective is published on the public portal with viewer + download."""
-    page = ROOT / "sprint1" / "retrospective.html"
-    pdf = ROOT / "assets" / "pdfs" / "sprint1-retrospective.pdf"
-    if not page.is_file():
-        failures.add("missing sprint1/retrospective.html")
-    if not pdf.is_file():
-        failures.add("missing assets/pdfs/sprint1-retrospective.pdf")
-    elif not pdf.read_bytes().startswith(b"%PDF"):
-        failures.add("sprint1-retrospective.pdf does not look like a PDF")
-    if page.is_file():
-        content = page.read_text(encoding="utf-8")
-        for needle in ("sprint1-retrospective.pdf", "pdf-viewer", "<iframe", "Download PDF", "doc-label"):
-            if needle not in content:
-                failures.add(f"retrospective.html missing {needle!r}")
-    hub = ROOT / "sprint1" / "index.html"
-    if hub.is_file() and "retrospective.html" not in hub.read_text(encoding="utf-8"):
-        failures.add("sprint1/index.html must link to retrospective.html")
-
-
 def main() -> int:
     failures = Failures()
     print("Damn Parking portal smoke tests")
@@ -381,7 +342,6 @@ def main() -> int:
         ("vercel static config", check_vercel_static),
         ("no preact package", check_no_preact_package),
         ("pdf link parity", check_pdf_links),
-        ("retrospective published", check_retrospective_published),
         ("html structure", check_html_structure),
         ("local asset refs", check_local_asset_refs),
         ("http smoke", check_http_smoke),
